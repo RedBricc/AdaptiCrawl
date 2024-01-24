@@ -27,7 +27,7 @@ def scrape(domain, locale, url, configuration=None):
     driver = WebScraper.get_page(url, loading_delay, timeout)
     logging.info(f"Web Scraper: {timeit.default_timer() - start}")
 
-    vehicles = {}
+    records = {}
     current_page = 1
     use_fallback, has_retried = False, False
 
@@ -64,7 +64,7 @@ def scrape(domain, locale, url, configuration=None):
 
         for block in blocks:
             alias = block['alias']
-            vehicles[alias] = block
+            records[alias] = block
 
         handler, output_page = PaginationHandler.next_page(driver, page_source, blocks, current_page, handler, interaction_buttons)
 
@@ -76,19 +76,19 @@ def scrape(domain, locale, url, configuration=None):
 
         current_page = output_page + 1
 
-    logging.info(f"Final size: {len(vehicles)} vehicles\nFound {current_page} pages")
+    logging.info(f"Final size: {len(records)} records\nFound {current_page} pages")
 
-    if len(vehicles) < min_record_count:
-        logging.error(f"Found less than {min_record_count} vehicles!")
+    if len(records) < min_record_count:
+        logging.error(f"Found less than {min_record_count} records!")
 
         take_screenshot(domain, locale, driver)
 
         return []
 
     driver.quit()
-    vehicles = unpack_vehicles(vehicles)
+    records = unpack_records(records)
 
-    return vehicles
+    return records
 
 
 def clean_data(page_source, url, ignored_cleaning_steps):
@@ -115,16 +115,16 @@ def find_blocks(soup, use_fallback):
     return blocks
 
 
-def unpack_vehicles(vehicles):
+def unpack_records(records):
     unpacked = []
-    for alias, vehicle in vehicles.items():
-        unpacked_vehicle = {}
+    for alias, record in records.items():
+        unpacked_record = {}
 
-        for key, value in vehicle.items():
+        for key, value in record.items():
             if key not in ['tag', 'index', 'group_id', 'parent']:
-                unpacked_vehicle[key] = value
+                unpacked_record[key] = value
 
-        unpacked.append(unpacked_vehicle)
+        unpacked.append(unpacked_record)
 
     return unpacked
 
@@ -149,6 +149,6 @@ if __name__ == '__main__':
 
     for site_domain, site_locale, site_url, site_configuration in sites:
         site_timer = timeit.default_timer()
-        site_vehicles = scrape(site_domain, site_locale, site_url, site_configuration)
+        site_records = scrape(site_domain, site_locale, site_url, site_configuration)
         logging.info(f"Total time: {timeit.default_timer() - site_timer}")
-        logging.log(18, site_vehicles)
+        logging.log(18, site_records)

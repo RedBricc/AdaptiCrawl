@@ -19,7 +19,7 @@ startup_timestamp = datetime.now()
 
 
 def scrape_static_pages():
-    domain, locale, url, vehicles, scraping_time, session_id = None, None, None, None, 0, None
+    domain, locale, url, records, scraping_time, session_id = None, None, None, None, 0, None
 
     configured_domains = SettingsService.get_static_settings()
     run_id = Database.save_run()
@@ -33,15 +33,15 @@ def scrape_static_pages():
                 start = timeit.default_timer()
 
                 locale, url = target
-                vehicles = try_scrape_page(StaticScraper, domain, locale, url, run_id)
+                records = try_scrape_page(StaticScraper, domain, locale, url, run_id)
 
-                if vehicles is None:
+                if records is None:
                     failed_scrapes.append((domain, locale, url, None, run_id, 1))
                 else:
                     logging.info(f"Total time: {timeit.default_timer() - start}\n")
     except:
         log_scrape_error(domain, locale, url, traceback.format_exc(), "static scraping domain", run_id,
-                         timeit.default_timer() - start, vehicles, session_id)
+                         timeit.default_timer() - start, records, session_id)
         failed_scrapes.append((domain, locale, url, None, run_id, 1))
 
     Database.end_run(run_id)
@@ -98,9 +98,9 @@ def init_catalog_scraping():
                 failed_scrapes.append((domain, locale, url, configuration, run_id, 1))
                 continue
 
-            domain, locale, url, configuration, error, vehicles = result
+            domain, locale, url, configuration, error, records = result
 
-            if vehicles is None:
+            if records is None:
                 failed_scrapes.append((domain, locale, url, configuration, run_id, 1))
             else:
                 url_counter += 1
@@ -130,18 +130,18 @@ def reorder_locale_configurations(configuration_dict):
     if remainder > 0:
         split_value += 1
 
-    split_count, next_index, vehicles_added = 1, 1, 0
+    split_count, next_index, records_added = 1, 1, 0
 
     for index, configuration in enumerate(other_configurations):
-        if vehicles_added >= split_value:
+        if records_added >= split_value:
             if remainder > 0 and split_count == remainder:
                 split_value += -1
             next_index += 1
             split_count += 1
-            vehicles_added = 0
+            records_added = 0
 
         reordered.insert(next_index, configuration)
-        vehicles_added += 1
+        records_added += 1
         next_index += 1
 
     return reordered
@@ -150,11 +150,11 @@ def reorder_locale_configurations(configuration_dict):
 def scrape_catalog_page(domain, locale, url, configuration, run_id, timestamp):
     try:
         setup_logger(timestamp)
-        vehicles = try_scrape_page(CatalogScraper, domain, locale, url, run_id, configuration)
+        records = try_scrape_page(CatalogScraper, domain, locale, url, run_id, configuration)
 
-        if vehicles is None:
-            return domain, locale, url, configuration, 'Not enough vehicles found!', None
-        return domain, locale, url, configuration, None, vehicles
+        if records is None:
+            return domain, locale, url, configuration, 'Not enough records found!', None
+        return domain, locale, url, configuration, None, records
     except:
         return domain, locale, url, configuration, traceback.format_exc(), None
 
@@ -176,9 +176,9 @@ def retry_failed_scrapes():
 
     for domain, locale, url, configuration, run_id, attempts in failed_scrapes_copy:
         if attempts < retry_attempts + 1:
-            vehicles = try_scrape_page(CatalogScraper, domain, locale, url, run_id, configuration, error_message='retrying')
+            records = try_scrape_page(CatalogScraper, domain, locale, url, run_id, configuration, error_message='retrying')
 
-            if vehicles is None:
+            if records is None:
                 failed_scrapes.append((domain, locale, url, configuration, run_id, attempts + 1))
 
         time.sleep(retry_wait_time_minutes * 60)
@@ -190,49 +190,49 @@ def try_scrape_page(scraper, domain, locale, url, run_id, configuration=None, er
     start = timeit.default_timer()
 
     logging.info(f"Scraping {domain} {locale} {url}")
-    vehicles, session_id, error = None, None, None
+    records, session_id, error = None, None, None
 
     try:
-        vehicles = scraper.scrape(domain, locale, url, configuration)
+        records = scraper.scrape(domain, locale, url, configuration)
 
-        session_id = Database.save_scrape(domain, locale, url, vehicles, 'Saving vehicles',
+        session_id = Database.save_scrape(domain, locale, url, records, 'Saving records',
                                           timeit.default_timer() - start, run_id)
 
-        if len(vehicles) < min_record_count:
-            raise Exception(f"Error: Too few vehicles ({len(vehicles)})!")
+        if len(records) < min_record_count:
+            raise Exception(f"Error: Too few records ({len(records)})!")
 
         db_start = timeit.default_timer()
 
-        Database.save_vehicles(vehicles, url, session_id, domain)
+        Database.save_records(records, url, session_id, domain)
 
-        if len(vehicles) > record_count_warning:
-            Database.update_scrape(session_id, vehicles, 'Success', timeit.default_timer() - start)
+        if len(records) > record_count_warning:
+            Database.update_scrape(session_id, records, 'Success', timeit.default_timer() - start)
         else:
-            Database.update_scrape(session_id, vehicles,
-                                   f'Warning: Low vehicle count ({len(vehicles)})', timeit.default_timer() - start)
+            Database.update_scrape(session_id, records,
+                                   f'Warning: Low record count ({len(records)})', timeit.default_timer() - start)
         logging.info(f"Database save time: {timeit.default_timer() - db_start}")
 
         logging.info(f"Total time: {timeit.default_timer() - start}\n")
     except:
         log_scrape_error(domain, locale, url, traceback.format_exc(), error_message, run_id,
-                         timeit.default_timer() - start, vehicles, session_id)
-        vehicles = None
+                         timeit.default_timer() - start, records, session_id)
+        records = None
     finally:
-        return vehicles
+        return records
 
 
-def log_scrape_error(domain, locale, url, error, message, run_id, scraping_time, vehicles, session_id):
+def log_scrape_error(domain, locale, url, error, message, run_id, scraping_time, records, session_id):
     logging.error(f"Error {message} {domain} {locale} {url}: {error}")
 
     if session_id is None:
-        Database.save_scrape(domain, locale, url, vehicles,
+        Database.save_scrape(domain, locale, url, records,
                              f"Error: {message} traceback: {error}", scraping_time, run_id)
     else:
-        Database.update_scrape(session_id, vehicles, f"Error: {message} traceback: {error}", scraping_time)
+        Database.update_scrape(session_id, records, f"Error: {message} traceback: {error}", scraping_time)
 
 
 def setup_logger(timestamp):
-    logging.addLevelName(19, "LONGO_DEBUG")
+    logging.addLevelName(19, "SCRAPER_DEBUG")
     logging.addLevelName(18, "DETAILED")
 
     time_format = "%Y-%m-%d %H:%M:%S"

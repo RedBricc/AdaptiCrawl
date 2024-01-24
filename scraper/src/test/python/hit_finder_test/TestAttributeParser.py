@@ -6,7 +6,7 @@ input_strings = ['3,950 €', '2,470€', '12 700 €', '€26,950.00', '€1,25
                  '2132km', '12thd', '120 thd', '15.6thd', '16.6 thd']
 
 
-class VehicleParserTest(unittest.TestCase):
+class RecordParserTest(unittest.TestCase):
     def test_parse_float(self):
         expected_results = [3950.0, 2470.0, 12700.0, 26950.0, 1250950.0, 23500.0, 137.0, 100.7,
                             2132.0, 12.0, 120.0, 15.6, 16.6]

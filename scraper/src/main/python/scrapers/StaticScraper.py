@@ -20,12 +20,12 @@ def scrape(domain, locale, url, interaction_buttons=None):
     driver = WebScraper.get_driver(url, loading_delay, timeout)
 
     accept_cookies(domain, driver, timeout)
-    vehicle_container = open_all_pages(domain, driver, timeout)
+    record_container = open_all_pages(domain, driver, timeout)
 
-    vehicle_blocks = get_vehicles(domain, vehicle_container, timeout)
-    vehicles = get_attributes(domain, locale, url, vehicle_blocks)
+    record_blocks = get_records(domain, record_container, timeout)
+    records = get_attributes(domain, locale, url, record_blocks)
 
-    return vehicles
+    return records
 
 
 def accept_cookies(domain, driver, timeout):
@@ -44,9 +44,9 @@ def open_all_pages(domain, driver, timeout):
 
     view_more_path = SettingsService.get_static_setting(domain, 'view_more_button').items()
 
-    vehicle_container_path = SettingsService.get_static_setting(domain, 'vehicle_container').items()
-    vehicle_container = try_get_element(driver, vehicle_container_path, timeout)
-    vehicle_count = get_vehicle_count(domain, vehicle_container, timeout)
+    record_container_path = SettingsService.get_static_setting(domain, 'record_container').items()
+    record_container = try_get_element(driver, record_container_path, timeout)
+    record_count = get_record_count(domain, record_container, timeout)
 
     distraction_button_method = SettingsService.get_static_setting(domain, 'distraction_button').items()
 
@@ -54,10 +54,10 @@ def open_all_pages(domain, driver, timeout):
         view_more = scroll_and_click(driver, view_more_path, distraction_button_method, timeout, scroll_delay)
         if view_more is None:
             break
-        vehicle_count = wait_for_load(domain, vehicle_container, vehicle_count, timeout)
-        logging.info(f"Loaded {vehicle_count} vehicles from {domain}...")
+        record_count = wait_for_load(domain, record_container, record_count, timeout)
+        logging.info(f"Loaded {record_count} records from {domain}...")
 
-    return vehicle_container
+    return record_container
 
 
 def scroll_and_click(driver, element_path, distraction_path, timeout, scroll_delay):
@@ -91,31 +91,31 @@ def scroll_and_click(driver, element_path, distraction_path, timeout, scroll_del
     return None
 
 
-def wait_for_load(domain, vehicle_container, old_count, timeout):
+def wait_for_load(domain, record_container, old_count, timeout):
     for i in range(timeout):
-        vehicle_count = get_vehicle_count(domain, vehicle_container, timeout)
-        if vehicle_count > old_count:
-            return vehicle_count
+        record_count = get_record_count(domain, record_container, timeout)
+        if record_count > old_count:
+            return record_count
         else:
-            logging.log(19, f"Vehicle count {vehicle_count} not greater than {old_count}, retrying...")
+            logging.log(19, f"Record count {record_count} not greater than {old_count}, retrying...")
             time.sleep(1)
     return old_count
 
 
-def get_vehicle_count(domain, vehicle_container, timeout):
-    return len(get_vehicles(domain, vehicle_container, timeout))
+def get_record_count(domain, record_container, timeout):
+    return len(get_records(domain, record_container, timeout))
 
 
-def get_vehicles(domain, vehicle_container, timeout):
-    vehicle_path = SettingsService.get_static_setting(domain, 'vehicle_path').items()
-    return try_get_elements(vehicle_container, vehicle_path, timeout)
+def get_records(domain, record_container, timeout):
+    record_path = SettingsService.get_static_setting(domain, 'record_path').items()
+    return try_get_elements(record_container, record_path, timeout)
 
 
-def get_attributes(domain, vehicle_location, source, vehicle_blocks):
+def get_attributes(domain, record_location, source, record_blocks):
     attributes = SettingsService.get_static_setting(domain, 'attributes').items()
-    vehicle_attributes = []
+    record_attributes = []
 
-    for vehicle_block in vehicle_blocks:
+    for record_block in record_blocks:
         attribute_values = {
             'alias': '',
             'title': None,
@@ -126,12 +126,12 @@ def get_attributes(domain, vehicle_location, source, vehicle_blocks):
             'price': '',
             'link': '',
             'competitor_name': domain,
-            'location': vehicle_location,
+            'location': record_location,
             'source': source
         }
 
         for attribute in attributes:
-            attribute_values[attribute[0]] = get_attribute_value(vehicle_block, attribute)
+            attribute_values[attribute[0]] = get_attribute_value(record_block, attribute)
 
         if attribute_values['title'] is None:
             attribute_values['title'] = f"{attribute_values['make']} {attribute_values['model']}"
@@ -150,13 +150,13 @@ def get_attributes(domain, vehicle_location, source, vehicle_blocks):
                     attribute_values['model'] = model_result.group(0).strip()
                     break
 
-        vehicle_attributes.append(attribute_values)
+        record_attributes.append(attribute_values)
 
-    return vehicle_attributes
+    return record_attributes
 
 
-def get_attribute_value(vehicle_block, attribute):
-    attribute_element = get_element(vehicle_block, attribute[1].items())
+def get_attribute_value(record_block, attribute):
+    attribute_element = get_element(record_block, attribute[1].items())
     attribute_type = SettingsService.get_group_setting(attribute[1], 'type')
 
     try:
@@ -267,9 +267,9 @@ def unpack_method(method_dict):
 if __name__ == "__main__":
     logging.basicConfig(level=19)
     url = 'https://bravoauto.lt/automobiliai'
-    vehicles, page_source = scrape('bravoauto', 'lt', url)
+    records, page_source = scrape('bravoauto', 'lt', url)
 
-    print(vehicles)
+    print(records)
 
     import preprocessing.HtmlCleaner as HtmlCleaner
     with open(f'../../../test/resources/static_raw.html', 'w', encoding='utf-8') as file:

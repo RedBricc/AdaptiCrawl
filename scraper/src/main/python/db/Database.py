@@ -74,7 +74,7 @@ def end_run(run_id):
             connection.close()
 
 
-def save_scrape(domain, locale, url, vehicles, message, scraping_time, run_id):
+def save_scrape(domain, locale, url, records, message, scraping_time, run_id):
     scrape_sql = ("INSERT INTO scraping_sessions (domain, locale, url, found_count, result, scraping_time, run_id) "
                   "VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id;")
 
@@ -83,10 +83,10 @@ def save_scrape(domain, locale, url, vehicles, message, scraping_time, run_id):
         connection = connect()
         cursor = get_cursor(connection)
 
-        if vehicles is None:
+        if records is None:
             cursor.execute(scrape_sql, (domain, locale, url, '0', message, scraping_time, run_id))
         else:
-            cursor.execute(scrape_sql, (domain, locale, url, len(vehicles), message, scraping_time, run_id))
+            cursor.execute(scrape_sql, (domain, locale, url, len(records), message, scraping_time, run_id))
 
         connection.commit()
         scrape_id = cursor.fetchone()[0]
@@ -97,7 +97,7 @@ def save_scrape(domain, locale, url, vehicles, message, scraping_time, run_id):
             connection.close()
 
 
-def update_scrape(scrape_id, vehicles, message, scraping_time):
+def update_scrape(scrape_id, records, message, scraping_time):
     scrape_sql = ("UPDATE scraping_sessions SET found_count = %s, result = %s, scraping_time = %s "
                   "WHERE id = %s;")
 
@@ -106,24 +106,24 @@ def update_scrape(scrape_id, vehicles, message, scraping_time):
         connection = connect()
         cursor = get_cursor(connection)
 
-        if vehicles is None:
+        if records is None:
             cursor.execute(scrape_sql, ('0', message, scraping_time, scrape_id))
             connection.commit()
             return
 
-        cursor.execute(scrape_sql, (len(vehicles), message, scraping_time, scrape_id))
+        cursor.execute(scrape_sql, (len(records), message, scraping_time, scrape_id))
         connection.commit()
     finally:
         if connection is not None:
             connection.close()
 
 
-def save_vehicles(vehicles, url, session_id, domain):
-    vehicle_sql = ("INSERT INTO vehicles (alias, title, make, model, variant, year, mileage, link, scraping_session_id)"
+def save_records(records, url, session_id, domain):
+    record_sql = ("INSERT INTO records (alias, title, make, model, variant, year, mileage, link, scraping_session_id)"
                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);")
-    prices_sql = ("INSERT INTO prices (vehicle_id, price, scraping_session_id)"
+    prices_sql = ("INSERT INTO prices (record_id, price, scraping_session_id)"
                   "VALUES (%s, %s, %s);")
-    sold_vehicle_sql = "UPDATE vehicles SET date_sold = %s WHERE id = %s;"
+    sold_record_sql = "UPDATE records SET date_sold = %s WHERE id = %s;"
 
     connection = None
     try:
@@ -131,27 +131,27 @@ def save_vehicles(vehicles, url, session_id, domain):
         cursor = get_cursor(connection)
 
         start = timeit.default_timer()
-        for vehicle in vehicles:
-            vehicle['alias'] = format_alias(vehicle['alias'], domain)
+        for record in records:
+            record['alias'] = format_alias(record['alias'], domain)
         logging.log(19, f"DB > Format alias: {timeit.default_timer() - start}")
 
         start = timeit.default_timer()
-        formatted_vehicles = format_vehicles(vehicles, session_id, cursor, url)
-        logging.log(19, f"DB > Format vehicles: {timeit.default_timer() - start}")
+        formatted_records = format_records(records, session_id, cursor, url)
+        logging.log(19, f"DB > Format records: {timeit.default_timer() - start}")
 
         start = timeit.default_timer()
-        cursor.executemany(vehicle_sql, formatted_vehicles)
+        cursor.executemany(record_sql, formatted_records)
         connection.commit()
-        logging.log(19, f"DB > Save vehicles: {timeit.default_timer() - start}")
+        logging.log(19, f"DB > Save records: {timeit.default_timer() - start}")
 
-        logging.info(f"Saved {len(formatted_vehicles)} vehicles")
-
-        start = timeit.default_timer()
-        vehicle_ids = get_vehicle_ids(vehicles, cursor)
-        logging.log(19, f"DB > Get vehicle ids: {timeit.default_timer() - start}")
+        logging.info(f"Saved {len(formatted_records)} records")
 
         start = timeit.default_timer()
-        formatted_prices = format_prices(vehicles, session_id, cursor)
+        record_ids = get_record_ids(records, cursor)
+        logging.log(19, f"DB > Get record ids: {timeit.default_timer() - start}")
+
+        start = timeit.default_timer()
+        formatted_prices = format_prices(records, session_id, cursor)
         logging.log(19, f"DB > Format prices: {timeit.default_timer() - start}")
 
         start = timeit.default_timer()
@@ -162,88 +162,88 @@ def save_vehicles(vehicles, url, session_id, domain):
         logging.log(logging.INFO, f"Saved {len(formatted_prices)} prices")
 
         start = timeit.default_timer()
-        reappearing_vehicles = format_reappearing_vehicles(url, cursor, vehicle_ids)
-        logging.log(19, f"DB > Format reappearing vehicles: {timeit.default_timer() - start}")
+        reappearing_records = format_reappearing_records(url, cursor, record_ids)
+        logging.log(19, f"DB > Format reappearing records: {timeit.default_timer() - start}")
 
         start = timeit.default_timer()
-        cursor.executemany(sold_vehicle_sql, reappearing_vehicles)
+        cursor.executemany(sold_record_sql, reappearing_records)
         connection.commit()
-        logging.log(19, f"DB > Update reappearing vehicles: {timeit.default_timer() - start}")
+        logging.log(19, f"DB > Update reappearing records: {timeit.default_timer() - start}")
 
-        logging.log(logging.INFO, f"Updated {len(reappearing_vehicles)} reappearing vehicles")
-
-        start = timeit.default_timer()
-        sold_vehicles = format_sold_vehicles(url, cursor, vehicle_ids)
-        logging.log(19, f"DB > Format sold vehicles: {timeit.default_timer() - start}")
+        logging.log(logging.INFO, f"Updated {len(reappearing_records)} reappearing records")
 
         start = timeit.default_timer()
-        cursor.executemany(sold_vehicle_sql, sold_vehicles)
+        sold_records = format_sold_records(url, cursor, record_ids)
+        logging.log(19, f"DB > Format sold records: {timeit.default_timer() - start}")
+
+        start = timeit.default_timer()
+        cursor.executemany(sold_record_sql, sold_records)
         connection.commit()
-        logging.log(19, f"DB > Update sold vehicles: {timeit.default_timer() - start}")
+        logging.log(19, f"DB > Update sold records: {timeit.default_timer() - start}")
 
-        logging.log(logging.INFO, f"Updated {len(sold_vehicles)} sold vehicles")
+        logging.log(logging.INFO, f"Updated {len(sold_records)} sold records")
     finally:
         if connection is not None:
             connection.close()
 
 
-def format_vehicles(vehicles, session_id, cursor, url):
-    formatted_vehicles = []
+def format_records(records, session_id, cursor, url):
+    formatted_records = []
 
-    for vehicle in vehicles:
-        if get_vehicle_id(vehicle, cursor) is not None:
+    for record in records:
+        if get_record_id(record, cursor) is not None:
             continue
 
-        if check_for_duplicates(vehicle, formatted_vehicles):
+        if check_for_duplicates(record, formatted_records):
             continue
 
-        formatted_vehicle = (vehicle.get('alias'),
-                             vehicle.get('title'),
-                             vehicle.get('make'),
-                             vehicle.get('model'),
-                             vehicle.get('variant'),
-                             vehicle.get('year'),
-                             vehicle.get('mileage'),
-                             format_link(vehicle, url),
+        formatted_record = (record.get('alias'),
+                             record.get('title'),
+                             record.get('make'),
+                             record.get('model'),
+                             record.get('variant'),
+                             record.get('year'),
+                             record.get('mileage'),
+                             format_link(record, url),
                              session_id)
-        formatted_vehicles.append(formatted_vehicle)
+        formatted_records.append(formatted_record)
 
-    return formatted_vehicles
+    return formatted_records
 
 
-def format_link(vehicle, url):
-    if vehicle['link'] is None:
+def format_link(record, url):
+    if record['link'] is None:
         return None
-    if vehicle['link'].startswith('http') or vehicle['link'].startswith('www'):
-        return vehicle['link']
+    if record['link'].startswith('http') or record['link'].startswith('www'):
+        return record['link']
     else:
         if url.endswith('/'):
-            if vehicle['link'].startswith('/'):
-                return url[:-1] + vehicle['link']
-            return url + vehicle['link']
-        return f"{url}/{vehicle['link']}"
+            if record['link'].startswith('/'):
+                return url[:-1] + record['link']
+            return url + record['link']
+        return f"{url}/{record['link']}"
 
 
 # Should be unnecessary, but just in case
-def check_for_duplicates(vehicle, formatted_vehicles):
-    for formatted_vehicle in formatted_vehicles:
-        if formatted_vehicle[0] == vehicle['alias']:
+def check_for_duplicates(record, formatted_records):
+    for formatted_record in formatted_records:
+        if formatted_record[0] == record['alias']:
             return True
     return False
 
 
-def format_prices(vehicles, session_id, cursor):
+def format_prices(records, session_id, cursor):
     try:
         formatted_prices = []
 
-        for vehicle in vehicles:
-            vehicle_id = get_vehicle_id(vehicle, cursor)
+        for record in records:
+            record_id = get_record_id(record, cursor)
 
-            if vehicle_id is None:
+            if record_id is None:
                 continue
 
-            formatted_price = (vehicle_id,
-                               vehicle['price'],
+            formatted_price = (record_id,
+                               record['price'],
                                session_id)
             formatted_prices.append(formatted_price)
 
@@ -253,64 +253,64 @@ def format_prices(vehicles, session_id, cursor):
         return []
 
 
-def format_sold_vehicles(url, cursor, vehicle_ids):
+def format_sold_records(url, cursor, record_ids):
     try:
-        cursor.execute("SELECT vehicles.id FROM vehicles "
-                       "JOIN scraping_sessions ON scraping_sessions.id = vehicles.scraping_session_id "
-                       "WHERE scraping_sessions.url = %s AND date_sold IS NULL AND vehicles.id NOT IN %s", (url, tuple(vehicle_ids),))
-        sold_vehicles = cursor.fetchall()
+        cursor.execute("SELECT records.id FROM records "
+                       "JOIN scraping_sessions ON scraping_sessions.id = records.scraping_session_id "
+                       "WHERE scraping_sessions.url = %s AND date_sold IS NULL AND records.id NOT IN %s", (url, tuple(record_ids),))
+        sold_records = cursor.fetchall()
 
-        formatted_sold_vehicles = []
+        formatted_sold_records = []
 
-        for sold_vehicle in sold_vehicles:
-            formatted_sold_vehicles.append((datetime.now() - timedelta(days=1), sold_vehicle[0]))
+        for sold_record in sold_records:
+            formatted_sold_records.append((datetime.now() - timedelta(days=1), sold_record[0]))
 
-        return formatted_sold_vehicles
+        return formatted_sold_records
     except:
         logging.error(traceback.format_exc())
         return []
 
 
-def format_reappearing_vehicles(url, cursor, vehicle_ids):
+def format_reappearing_records(url, cursor, record_ids):
     try:
-        cursor.execute("SELECT vehicles.id FROM vehicles "
-                       "JOIN scraping_sessions ON scraping_sessions.id = vehicles.scraping_session_id "
-                       "WHERE scraping_sessions.url = %s AND date_sold IS NOT NULL AND vehicles.id IN %s", (url, tuple(vehicle_ids),))
-        sold_reappearing_vehicles = cursor.fetchall()
+        cursor.execute("SELECT records.id FROM records "
+                       "JOIN scraping_sessions ON scraping_sessions.id = records.scraping_session_id "
+                       "WHERE scraping_sessions.url = %s AND date_sold IS NOT NULL AND records.id IN %s", (url, tuple(record_ids),))
+        sold_reappearing_records = cursor.fetchall()
 
-        formatted_reappearing_vehicles = []
+        formatted_reappearing_records = []
 
-        for reappearing_vehicle in sold_reappearing_vehicles:
-            formatted_reappearing_vehicles.append((None, reappearing_vehicle[0]))
+        for reappearing_record in sold_reappearing_records:
+            formatted_reappearing_records.append((None, reappearing_record[0]))
 
-        return formatted_reappearing_vehicles
+        return formatted_reappearing_records
     except:
         logging.error(traceback.format_exc())
         return []
 
 
-def get_vehicle_ids(vehicles, cursor):
+def get_record_ids(records, cursor):
     try:
-        vehicle_ids = []
+        record_ids = []
 
-        for vehicle in vehicles:
-            vehicle_id = get_vehicle_id(vehicle, cursor)
-            if vehicle_id is not None:
-                vehicle_ids.append(vehicle_id)
+        for record in records:
+            record_id = get_record_id(record, cursor)
+            if record_id is not None:
+                record_ids.append(record_id)
 
-        return vehicle_ids
+        return record_ids
     except:
         logging.error(traceback.format_exc())
         return []
 
 
-def get_vehicle_id(vehicle, cursor):
+def get_record_id(record, cursor):
     try:
-        cursor.execute("SELECT id FROM vehicles WHERE alias = %s", (vehicle['alias'],))
+        cursor.execute("SELECT id FROM records WHERE alias = %s", (record['alias'],))
         result = cursor.fetchall()
 
         if len(result) > 1:
-            raise Exception("Multiple vehicles with same alias: " + vehicle['alias'])
+            raise Exception("Multiple records with same alias: " + record['alias'])
         elif len(result) == 1:
             return result[0][0]
         else:

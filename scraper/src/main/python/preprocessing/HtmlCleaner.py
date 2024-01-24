@@ -166,6 +166,8 @@ def remove_tags_by_criteria(soup, **kwargs):
 
 
 def remove_stopwords(soup, ignored_cleaning_steps=()):
+    if 'remove_stopwords' in ignored_cleaning_steps:
+        return
     stopwords = StopwordService.get_stopwords()
     for stopword in stopwords:
         stopword_regex = regex.compile(regex.escape(stopword), regex.IGNORECASE)
@@ -177,6 +179,8 @@ def remove_stopwords(soup, ignored_cleaning_steps=()):
 
 
 def remove_non_whitelisted_attributes(soup, ignored_cleaning_steps=()):
+    if 'remove_non_whitelisted_attributes' in ignored_cleaning_steps:
+        return
     whitelisted_attributes = SettingsService.get_catalog_setting('whitelisted_attributes')
     whitelisted_attributes.append('scraper-index')
 
@@ -192,6 +196,8 @@ def remove_non_whitelisted_attributes(soup, ignored_cleaning_steps=()):
 
 
 def flatten_text(soup, ignored_cleaning_steps=()):
+    if 'flatten_text' in ignored_cleaning_steps:
+        return
     flattened_tags = SettingsService.get_catalog_setting('flattened_tags')
     for flattened_tag in flattened_tags:
         for tag in soup.select(flattened_tag):
@@ -209,6 +215,8 @@ def flatten_text(soup, ignored_cleaning_steps=()):
 
 
 def flatten_special_strings(soup, ignored_cleaning_steps=()):
+    if 'flatten_special_strings' in ignored_cleaning_steps:
+        return
     flattened_special_strings = SettingsService.get_catalog_setting('flattened_special_strings')
     for flattened_special_string in flattened_special_strings:
         for string in soup.find_all(string=flattened_special_string):
@@ -218,6 +226,8 @@ def flatten_special_strings(soup, ignored_cleaning_steps=()):
 
 
 def remove_empty_tags(soup, ignored_cleaning_steps=()):
+    if 'remove_empty_tags' in ignored_cleaning_steps:
+        return
     empty_tags = SettingsService.get_catalog_setting('empty_tags')
 
     tags = soup.find_all()
@@ -284,7 +294,9 @@ def join_if_present(a, b):
 
 
 def remove_duplicate_whitespace(soup, ignored_cleaning_steps=()):
-    whitespace_regex = regex.compile(r'\s{2,}')
+    if 'remove_duplicate_whitespace' in ignored_cleaning_steps:
+        return
+    whitespace_regex = regex.compile(r'[\s\n\r\t\v\f\0]+')
     found_tags = soup.find_all(string=whitespace_regex)
 
     for tag in found_tags:
@@ -293,6 +305,8 @@ def remove_duplicate_whitespace(soup, ignored_cleaning_steps=()):
 
 
 def remove_punctuation_whitespace(soup, ignored_cleaning_steps=()):
+    if 'remove_punctuation_whitespace' in ignored_cleaning_steps:
+        return
     punctuation_marks = SettingsService.get_catalog_setting('punctuation_marks')
     for punctuation_mark in punctuation_marks:
         punctuation_regex = regex.compile(f'\\s+{regex.escape(punctuation_mark)}')
