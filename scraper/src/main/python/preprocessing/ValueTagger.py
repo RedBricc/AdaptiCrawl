@@ -36,7 +36,7 @@ def example_replace_text(soup, rule):
     examples = rule.get('examples')
 
     for example in examples:
-        input_regex = f"\\b{regex.escape(str(example))}\\b"
+        input_regex = f"(?<=\\b|\\s){regex.escape(str(example))}(?=\\b|\\s)"
         example_regex = compile_regex(rule, input_regex)
         found_tags = soup.find_all(string=example_regex)
 

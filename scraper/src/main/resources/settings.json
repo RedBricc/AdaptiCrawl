@@ -1,0 +1,262 @@
+{
+  "webscraper_settings": {
+    "headless": false,
+    "tag_count_cutoff": 600,
+    "retry_count": 3,
+    "retry_interval": 3
+  },
+  "scheduler_settings": {
+    "scrape_on_startup": true,
+    "retry_attempts": 5,
+    "retry_startup_time_minutes": 10,
+    "retry_wait_time_minutes": 2
+  },
+  "catalog_scraper_settings": {
+    "pool_capacity": 4,
+    "process_timeout": 3600,
+    "loading_delay": 3,
+    "scroll_delay": 1,
+    "scroll_offset": 300,
+    "max_page_count": 200,
+    "timeout": 1,
+    "retry_timeout": 3,
+    "min_record_count": 5,
+    "record_count_warning": 24,
+    "max_tag_distance": 4,
+    "max_pagination_distance": 3,
+    "view_more_attempts": 3,
+    "view_more_load_all": false,
+    "view_more_load_delay": 3,
+    "paginator_levels": 4,
+    "paginator_delay": 10,
+    "paginator_attempts": 3,
+    "stopwords_enabled": false,
+    "pagination_tags": [
+      "a",
+      "button"
+    ],
+    "excluded_tags": [
+      "script",
+      "svg",
+      "meta",
+      "style",
+      "option",
+      "input",
+      "menu",
+      "select",
+      "s"
+    ],
+    "whitelisted_attributes": [
+      "src",
+      "href",
+      "id",
+      "alt",
+      "title",
+      "label",
+      "data-src",
+      "data-href",
+      "data-id",
+      "data-alt",
+      "data-title",
+      "data-label",
+      "aria-src",
+      "aria-href",
+      "aria-id",
+      "aria-alt",
+      "aria-title",
+      "aria-label",
+      "onclick",
+      "class"
+    ],
+    "flattened_tags": [
+      "b",
+      "strong",
+      "i",
+      "em",
+      "u",
+      "sup",
+      "sub",
+      "small",
+      "big",
+      "center",
+      "font",
+      "strike",
+      "font",
+      "span",
+      "p"
+    ],
+    "flattened_special_strings": [
+      "eur",
+      "EUR",
+      "€"
+    ],
+    "invisible_tag_regex": [
+      "display:\\s*none",
+      "position:\\s*fixed",
+      "text\\-decoration:\\s*line\\-through"
+    ],
+    "empty_tags": [
+      "br"
+    ],
+    "target_domains": {
+      "test": [
+        {
+          "locale": "1a",
+          "url": "https://www.1a.lv/c/datoru-komponentes-tikla-produkti/komponentes/procesori/2vr"
+        },
+        {
+          "locale": "220.lv",
+          "url": "https://220.lv/lv/datortehnika/datoru-komponentes/procesori-cpu"
+        }
+      ]
+    },
+    "punctuation_marks": [
+      ".",
+      ",",
+      ";",
+      ":",
+      "!",
+      "?",
+      "…"
+    ],
+    "view_more_aliases": [
+      "view",
+      "more",
+      "show",
+      "load",
+      "see",
+      "next",
+      "skatīt",
+      "skatīt",
+      "vairāk",
+      "vēl",
+      "ielādēt",
+      "redzēt",
+      "peržiūrėti",
+      "daugiau",
+      "rodyti",
+      "įkelti",
+      "žiūrėti",
+      "matyti",
+      "vaata",
+      "rohkem",
+      "näita",
+      "lae",
+      "laadige",
+      "näe",
+      "katso",
+      "järgmiseks",
+      "järgmine",
+      "saada"
+    ],
+    "paginator_classes": [
+      "pagination",
+      "paginator",
+      "pager",
+      "page",
+      "pages",
+      "paging",
+      "nav",
+      "navi",
+      "navs",
+      "navis",
+      "navigate",
+      "navigation"
+    ],
+    "attribute_rules": [
+      {
+        "name": "image_link",
+        "regex": ".+",
+        "required": false,
+        "type": "text",
+        "default": "",
+        "tags": [
+          "attribute",
+          "regex_driven"
+        ],
+        "attribute_regex": "\\bsrc$",
+        "examples": []
+      },
+      {
+        "name": "alias",
+        "regex": "(?<=\\/?)[^\\/]+?(?=\\/?$)",
+        "required": true,
+        "type": "text",
+        "default": "",
+        "tags": [
+          "attribute",
+          "regex_driven"
+        ],
+        "attribute_regex": "\\bhref$",
+        "examples": []
+      },
+      {
+        "name": "link",
+        "regex": ".*\\$ALIAS\\$",
+        "required": false,
+        "type": "text",
+        "tags": [
+          "attribute",
+          "regex_driven",
+          "aggregate"
+        ],
+        "attribute_regex": "\\bhref$",
+        "examples": []
+      },
+      {
+        "name": "brand",
+        "regex": "\\b[A-Z][A-Za-z]{2,4}\\b",
+        "required": true,
+        "type": "text",
+        "default": "",
+        "tags": [
+          "text",
+          "example_driven",
+          "ignore_case",
+          "exclusive",
+          "backup_regex"
+        ],
+        "attribute_regex": "\\b(title|alt)$",
+        "backup_regex": "^[^\\s]+",
+        "examples": [
+          "AMD™",
+          "AMD",
+          "INTEL®",
+          "INTEL"
+        ]
+      },
+      {
+        "name": "model",
+        "regex": "(?<=\\$BRAND\\$,?\\s)(\\s?[^\\s\\$]+){1,4}",
+        "required": true,
+        "type": "text",
+        "default": "",
+        "tags": [
+          "text",
+          "regex_driven",
+          "ignore_case",
+          "filtered"
+        ],
+        "attribute_regex": "\\b(title|alt)$",
+        "filter_regex": "(,|\\s?\\d(\\.\\d\\d?)?(G|M)Hz)",
+        "examples": []
+      },
+      {
+        "name": "price",
+        "regex": "(\\d{1,3}([\\s,]?\\d{3}){0,2}([\\.,]\\d\\d)?\\s?(€|EUR)|(€|EUR)\\s?\\d{1,3}([\\s,]?\\d{3}){0,2}([\\.,]\\d\\d)?)",
+        "required": true,
+        "type": "float",
+        "default": 0,
+        "tags": [
+          "text",
+          "regex_driven",
+          "ignore_case"
+        ],
+        "examples": []
+      }
+    ]
+  },
+  "static_scraper_settings": {
+
+  }
+}

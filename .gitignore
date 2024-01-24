@@ -1,6 +1,5 @@
 # Sensitive or high-risk files
 scraper/src/main/python/db/Credentials.py
-scraper/src/main/resources/settings.json
 # Environment-based files
 db/venv/
 scraper/venv/
