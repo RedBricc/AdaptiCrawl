@@ -1,8 +1,10 @@
 # Sensitive or high-risk files
-scraper/src/main/python/db/Credentials.py
+scraper/main/python/db/Credentials.py
 # Environment-based files
 db/venv/
 scraper/venv/
+Lib/
+Scripts/
 # idea
 *.iml
 *.ipr
@@ -10,3 +12,9 @@ scraper/venv/
 .idea/
 .ideaDataSources
 dataSources
+/logs/
+/screenshots/
+/scraper/test/resources/
+/scraper/main/debug/
+/scraper/main/resources/proxy_extensions/
+/scraper/main/resources/temp.*
