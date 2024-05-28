@@ -20,8 +20,8 @@ ENVIRONMENT = 'dev'
 
 # Running the scheduler
 1. Open the AdaptiCrawl directory in your terminal of choice
-2. Execute ```python scraper/src/main/python/Scheduler.py``` to start the scheduler 
+2. Execute ```python scraper/main/python/Scheduler.py``` to start the scheduler 
 
 # Running an individual scrape
 1. Open the AdaptiCrawl directory in your terminal of choice
-2. Execute ```python scraper/src/main/python/scrapers/CatalogScraper.py``` to start the worker
+2. Execute ```python scraper/main/python/scrapers/CatalogScraper.py``` to start the worker
