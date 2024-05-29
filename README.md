@@ -1,10 +1,11 @@
 # AdaptiCrawl
-Adaptive web scraper for long term scraping purposes
+Adaptive web scraper for long-term scraping purposes
+NOTE: THIS IS NOT A STRIPPED-DOWN VERSION OF THE REAL IMPLEMENTATION. IT SHOULD ONLY BE USED FOR REFERENCE PURPOSES.
 
 # Setup
 1. Open the AdaptiCrawl directory in your terminal of choice
 2. Execute ```pip install -r requirements.txt```
-3. Create a postgres 14.9 database
+3. Create a Postgres 14.9 database
 4. Open scraper/main/python/db
 5. Create the file Credentials.py using the provided template
 ```python
