@@ -1,7 +1,7 @@
 # AdaptiCrawl
 Adaptive web scraper for long-term scraping purposes
 
-## NOTE: THIS IS NOT A STRIPPED-DOWN VERSION OF THE REAL IMPLEMENTATION. IT SHOULD ONLY BE USED FOR REFERENCE PURPOSES.
+## NOTE: THIS IS A STRIPPED-DOWN VERSION OF THE REAL IMPLEMENTATION. IT SHOULD ONLY BE USED FOR REFERENCE PURPOSES.
 
 # Setup
 1. Open the AdaptiCrawl directory in your terminal of choice
